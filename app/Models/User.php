@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Model
+class User extends Authenticatable
 {
-    protected $fillable = ['nombre', 'apellidos', 'contraseña', 'rol', 'tiquete_id'];
+    use HasFactory, Notifiable;
 
-    // Relación con Tiquetes
-    public function ticket()
+    protected $fillable = ['name', 'email', 'password', 'rol', 'documento', 'taquilla_id'];
+
+    // ✅ Nuevo método en lugar de `can()`
+    public function isAdmin()
     {
-        return $this->belongsTo(Ticket::class, 'tiquete_id');
+        return $this->rol === 'admin';
     }
 }

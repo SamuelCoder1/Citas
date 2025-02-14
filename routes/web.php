@@ -1,26 +1,42 @@
 <?php
 
+use App\Livewire\GestionTurnos;
+use App\Livewire\SolicitarTurno;
+use App\Livewire\PantallaTurnos;
+use App\Livewire\AdminGestionAsesores;
+use App\Livewire\AdminGestionTaquillas;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\TicketController;
-use App\Http\Controllers\TicketOfficeController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Rutas de autenticación
-Route::post('/login', [AuthController::class, 'login']);
+// ✅ Rutas públicas
+Route::get('/solicitar-turno', SolicitarTurno::class)->name('solicitar-turno');
+Route::get('/pantalla-turnos', PantallaTurnos::class)->name('pantalla-turnos');
 
-// Rutas de usuarios (empleados)
-Route::post('/employees', [UserController::class, 'storeEmployee']);
+// ✅ Rutas protegidas para asesores
+Route::middleware(['auth'])->group(function () {
+    Route::get('/gestion-turnos', GestionTurnos::class)->name('gestion-turnos');
 
-// Rutas de tickets
-Route::post('/tickets', [TicketController::class, 'requestTicket']);
-Route::put('/tickets/{ticketId}', [TicketController::class, 'updateTicketStatus']);
+    // ✅ Rutas protegidas solo para admins usando `Gate::authorize`
+    Route::get('/admin/asesores', function () {
+        Gate::authorize('admin'); // 🔹 Verifica si el usuario es admin
+        return app(AdminGestionAsesores::class);
+    })->name('admin.asesores');
 
-// Rutas de taquillas (ticket offices)
-Route::post('/ticket-offices', [TicketOfficeController::class, 'createTicketOffice']);
-Route::get('/ticket-offices/available', [TicketOfficeController::class, 'getAvailableTicketOffice']);
-Route::put('/ticket-offices/{id}', [TicketOfficeController::class, 'updateTicketOfficeStatus']);
+    Route::get('/admin/taquillas', function () {
+        Gate::authorize('admin'); // 🔹 Verifica si el usuario es admin
+        return app(AdminGestionTaquillas::class);
+    })->name('admin.taquillas');
+});
+
+// ✅ Ruta para cerrar sesión
+Route::post('/logout', function () {
+    Auth::logout();
+    return redirect('/login');
+})->name('logout');
+
+require __DIR__.'/auth.php';
